@@ -5,91 +5,108 @@ using namespace std;
 #include "CFilemanager.cpp"
 #pragma once
 
-class CUserInterface: public CSudoku, public CUndoManager, public CFilemanager
+class CUserInterface: public CSudoku, public CUndoManager, public CFilemanager                                          // Vererbt von drei Klassen
 {
     public:
     CUserInterface();
-    void menue(int uebergebenesboard[9][9], CSudoku& spielfeld, CUndoManager& undomanager, CFilemanager& filemanager);
+    void menue(int uebergebenesboard[9][9], CSudoku& spielfeld, CUndoManager& undoManager, CFilemanager& filemanager); // Menüfunktion mit Referenzen auf Spielfeld, Undo und Filemanager
 };
 
 CUserInterface::CUserInterface()
-{
+{}                                                                                                                      // Leerer Konstruktor
 
-}
-
-void CUserInterface::menue(int uebergebenesboard[9][9], CSudoku& spielfeld, CUndoManager& undomanager, CFilemanager& filemanger)
+void CUserInterface::menue(int uebergebenesboard[9][9], CSudoku& spielfeld, CUndoManager& undoManager, CFilemanager& filemanager)
 {
-    int e;
-    bool running = true;
-    string datei = "data.txt";
-  
-    while(running)
+    int e;                                                                                                              // Menüauswahl
+    bool running = true;                                                                                                // Steuert die Hauptschleife
+    string datei = "data.txt";                                                                                          // Standard-Dateiname zum Speichern
+
+    while(running)                                                                                                      // Hauptmenüschleife
     {
         cout << "Menue:" << endl;
         cout << " 1 - Datei laden\n 2 - Spiel anzeigen\n 3 - Spiel spielen\n 4 - Rückgängig machen" << endl;
         cout << " 5 - Spiel speichern \n 6 - löse Sudoku\n 7 - Beenden" << endl;
 
-        if (!(cin >> e)) // Überprüft, ob die Eingabe eine gültige Zahl ist
+        if (!(cin >> e))                                                                                                // Ungültige Eingabe prüfen
         {
             cout << "Falsche Eingabe\n";
-            cin.clear();              // Eingabefehler zurücksetzen
-            cin.ignore(1000, '\n');   // Eingabepuffer leeren
-            continue; // Zurück zum Menü
+            cin.clear();                                                                                                // Fehlerstatus löschen
+            cin.ignore(1000, '\n');                                                                                     // Eingabepuffer leeren
+            continue;                                                                                                   // Zurück zum Menü
         }
 
-
-        switch (e)
+        switch (e)                                                                                                      // Menüauswahl
         {
             case 1: 
                 cout << "Wählen Sie einen Schwierigkeitsgrad: " << endl;
-                cout << " 1 - Easy\n 2 - Medium\n 3 - Hard\n 4 - Zufall" << endl;
-                if (!(cin >> e)) // Überprüft, ob die Eingabe eine gültige Zahl ist
+                cout << " 1 - Easy\n 2 - Medium\n 3 - Hard\n" << endl;
+                if (!(cin >> e))                                                                                         // Eingabe prüfen
                 {
                     cout << "Falsche Eingabe\n";
-                    cin.clear();              // Eingabefehler zurücksetzen
-                    cin.ignore(1000, '\n');   // Eingabepuffer leeren
-                    continue; // Zurück zum Menü
+                    cin.clear();                                                                                        // Fehlerstatus löschen
+                    cin.ignore(1000, '\n');                                                                             // Puffer leeren
+                    continue;                                                                                           // Zurück zum Menü
                 }
-    
-                filemanger.load(e, uebergebenesboard);
-                spielfeld.printBoard(uebergebenesboard);
+
+                try 
+                {
+                    filemanager.load(e, uebergebenesboard);                                                             // Lade Datei je nach Schwierigkeitsgrad
+                    spielfeld.printBoard(uebergebenesboard);                                                            // Zeige geladenes Board
+                }
+                catch (const exception& e) 
+                {
+                    cerr << "FEHLER: " << e.what() << endl;                                                             // Fehlerausgabe
+                }
                 break;
-            
+
             case 2:
-                spielfeld.printBoard(uebergebenesboard);
+                spielfeld.printBoard(uebergebenesboard);                                                                // Zeige aktuelles Board
                 break;
-    
+
             case 3:
-                spielfeld.set_number(uebergebenesboard, undomanager);
-                spielfeld.printBoard(uebergebenesboard);
+                spielfeld.set_number(uebergebenesboard, undoManager);                                                   // Benutzer setzt Zahl
+                spielfeld.printBoard(uebergebenesboard);                                                                // Zeige aktualisiertes Board
                 break;
-    
+
             case 4:
-                undomanager.undo(uebergebenesboard);
-                spielfeld.printBoard(uebergebenesboard);
+                try
+                {
+                    undoManager.undo(uebergebenesboard);                                                               // Rückgängig machen
+                    spielfeld.printBoard(uebergebenesboard);                                                           // Zeige aktuelles Board
+                }
+                catch (const exception& e) 
+                {
+                    cerr << "FEHLER: " << e.what() << endl;                                                             // Fehlerausgabe
+                }
                 break;
-    
-            case 5: 
-                undomanager.speichern(uebergebenesboard);
-                filemanger.save(datei, uebergebenesboard);
-                spielfeld.printBoard(uebergebenesboard);
+
+            case 5:
+                try
+                {
+                    undoManager.speichern(uebergebenesboard);                                                           // Zustand speichern
+                    filemanager.save(datei, uebergebenesboard);                                                         // Board in Datei schreiben
+                    spielfeld.printBoard(uebergebenesboard);                                                            // Zeige gespeichertes Board
+                }
+                catch (const exception& e)
+                {
+                    cerr << "FEHLER: " << e.what() << endl;                                                             // Fehlerausgabe
+                }
                 break;
-    
+
             case 6: 
-                // solve funktion 
+                spielfeld.solve(uebergebenesboard, 0, 0, undoManager);                                                  // Sudoku automatisch lösen
+                system("cls");                                                                                          // Konsole leeren (Windows-spezifisch)
+                spielfeld.printBoard(uebergebenesboard);                                                                // Lösung anzeigen
                 break;
-            
+
             case 7:
-                cout << "Spiel beendet" << endl;
-                running = false;
+                cout << "Spiel beendet" << endl;                                                                        // Beenden
+                running = false;                                                                                        // Schleife verlassen
                 break;
-                
+
             default:
-                cout << "Falsche Eingabe!" << endl;
+                cout << "Falsche Eingabe!" << endl;                                                                     // Ungültige Menüwahl
                 break;
         }
-    }
-   
-            
-        
+    }    
 }

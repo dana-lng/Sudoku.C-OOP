@@ -10,14 +10,7 @@ int main()
     CUndoManager undomanager;
     CUserInterface menue;
 
-
-    
-
-
-
     // main 
     int board[9][9];
     menue.menue(board, spielfeld, undomanager, filemanager);
-      
-
 }

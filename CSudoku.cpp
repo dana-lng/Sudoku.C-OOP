@@ -20,13 +20,11 @@ class CSudoku
         int check_double_felder(int uebergebenesBoard[9][9], int zeile, int spalte, int wert);
         int check_double_zeilen_spalten(int uebergebenesBoard[9][9], int zeile, int spalte, int wert);
         int check_if_occupied(int uebergebenesBoard[9][9], int zeile, int spalte);
-
+        int solve(int uebergebensBoard[9][9], int zeile, int spalte, CUndoManager& undoManager);
 };
 
 CSudoku::CSudoku()
-{
-
-}
+{}
 
 void CSudoku::printBoard(int uebergebenesBoard[9][9])
 {
@@ -73,14 +71,18 @@ void CSudoku::set_number(int uebergebenesBoard[9][9], CUndoManager& undoManager)
     string eingabe;
 
     // Eingabe Zeile
-    while (true) {
+    while (true) 
+    {
         cout << "\nIn welcher Zeile wollen Sie die Zahl setzen (1 bis 9)?" << endl;
         getline(cin, eingabe);
         stringstream ss(eingabe);
 
-        if ((ss >> zeile) && ss.eof() && zeile >= 1 && zeile <= 9) {
+        if ((ss >> zeile) && ss.eof() && zeile >= 1 && zeile <= 9) 
+        {
             break;
-        } else {
+        } 
+        else 
+        {
             cout << "Falsche Eingabe. Bitte geben Sie eine Zahl zwischen 1 und 9 ein." << endl;
         }
     }
@@ -134,7 +136,7 @@ int CSudoku::check_double_felder(int uebergebenesBoard[9][9], int zeile, int spa
         for (int j = 0; j < 3; j++) // Iteriert über die 3 Spalten des Blocks
         {
            
-            if (uebergebenesBoard[feld_start_zeile + i][feld_start_spalte + j] == wert)  // Prüft, ob die Zahl `wert` bereits in einer der Zellen des Blocks vorhanden ist
+            if (uebergebenesBoard[feld_start_zeile + i][feld_start_spalte + j] == wert)  // Prüft, ob die Zahl wert bereits in einer der Zellen des Blocks vorhanden ist
             {
               
                 cout << "Die Zahl " << wert << " ist bereits in diesem Feldblock vorhanden.\n" << endl;
@@ -181,4 +183,43 @@ int CSudoku::check_if_occupied(int uebergebenesBoard[9][9], int zeile, int spalt
          cout << "Diese Position ist bereits besetzt. Bitte wählen Sie eine andere Position." << endl;
          return 1;
      }
+}
+
+int CSudoku::solve(int uebergebenesBoard[9][9], int zeile, int spalte, CUndoManager& undoManager)
+{
+    int wert; 
+    
+    if (zeile == 9) // Wenn alle Zeilen abgearbeitet sind, ist das Sudoku vollständig gelöst
+    {
+        return 1; 
+    }
+    else if (spalte == 9)  // Wenn alle Spalten in der aktuellen Zeile abgearbeitet sind, springt zur nächsten Zeile
+    {
+        return solve(uebergebenesBoard, zeile + 1, 0, undoManager); // Wechselt zur nächsten Zeile und starte bei Spalte 0
+    }
+    else if (uebergebenesBoard[zeile][spalte] != 0)    // Wenn die aktuelle Zelle bereits einen festen Wert hat, wird übersprungen
+    {
+        return solve(uebergebenesBoard, zeile, spalte + 1, undoManager); 
+    }
+    else 
+    {
+        for (wert = 1; wert < 10; wert++) //geht alle Werte von 1 bis 9 durch
+        {
+            if (check_double_zeilen_spalten(uebergebenesBoard, zeile + 1, spalte + 1, wert) == 0 &&  // Prüft, ob der Wert in der aktuellen Zeile, Spalte oder dem 3x3-Block gültig ist
+                check_double_felder(uebergebenesBoard, zeile + 1, spalte + 1, wert) == 0) 
+            {
+                undoManager.speichern(uebergebenesBoard); // Speichert den aktuellen Zustand des Boards (für "Undo"-Funktion
+                
+                uebergebenesBoard[zeile][spalte] = wert;  // Setzt den Wert in das Board
+
+                if (solve(uebergebenesBoard, zeile, spalte + 1, undoManager) == 1) // Prüft, ob das Sudoku mit diesem Wert lösbar ist
+                {
+                    return 1; // Sudoku erfolgreich gelöst 
+                }
+
+                uebergebenesBoard[zeile][spalte] = 0; // Rückgängigmachen der Änderung (Backtracking), wenn der aktuelle Wert nicht zur Lösung führt
+            }
+        }
+        return 0;
+    }
 }
